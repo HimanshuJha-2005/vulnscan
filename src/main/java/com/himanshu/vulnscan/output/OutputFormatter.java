@@ -280,4 +280,65 @@ public class OutputFormatter {
         String bar = "█".repeat(filled) + "░".repeat(barWidth - filled);
         return String.format("\r[%s] %.1f%% (%d/%d) %s", bar, progress.getPercentage(), progress.current(), progress.total(), progress.message());
     }
+
+    // Checks formatting
+    public String formatChecksTable(List<VulnerabilityCheck> checks) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("╔══════════════════════════════════════════════════════════════════════════════════════════════╗\n");
+        sb.append("║  ").append(String.format("%-90s", "Available Vulnerability Checks")).append("  ║\n");
+        sb.append("╠══════════════════════════════════════════════════════════════════════════════════════════════╣\n");
+        sb.append("║  ").append(String.format("%-20s %-30s %-8s %-5s %-30s  ║", "ID", "NAME", "SEV", "CVSS", "TAGS")).append("\n");
+        sb.append("╠").append("─".repeat(98)).append("╣\n");
+
+        for (VulnerabilityCheck check : checks) {
+            String id = check.metadata().id();
+            String name = check.metadata().name();
+            if (name.length() > 30) name = name.substring(0, 27) + "...";
+            String severity = check.metadata().severity().toString();
+            String cvss = String.format("%.1f", check.metadata().cvss());
+            String tags = String.join(",", check.metadata().tags());
+            if (tags.length() > 30) tags = tags.substring(0, 27) + "...";
+
+            sb.append("║  ").append(String.format("%-20s %-30s %-8s %-5s %-30s  ║",
+                    truncate(id, 20), name, severity, cvss, tags)).append("\n");
+        }
+
+        sb.append("╚").append("═".repeat(98)).append("╝\n");
+        return sb.toString();
+    }
+
+    public String formatChecksJson(List<VulnerabilityCheck> checks) {
+        try {
+            return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(checks.stream()
+                    .map(c -> Map.of(
+                            "id", c.metadata().id(),
+                            "name", c.metadata().name(),
+                            "description", c.metadata().description(),
+                            "severity", c.metadata().severity().toString(),
+                            "cvss", c.metadata().cvss(),
+                            "affectedProducts", c.metadata().affectedProducts(),
+                            "references", c.metadata().references(),
+                            "tags", c.metadata().tags()
+                    ))
+                    .toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize checks JSON", e);
+        }
+    }
+
+    public String formatChecksCsv(List<VulnerabilityCheck> checks) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("id,name,description,severity,cvss,affectedProducts,references,tags\n");
+        for (VulnerabilityCheck check : checks) {
+            sb.append(escapeCsv(check.metadata().id())).append(",");
+            sb.append(escapeCsv(check.metadata().name())).append(",");
+            sb.append(escapeCsv(check.metadata().description())).append(",");
+            sb.append(escapeCsv(check.metadata().severity().toString())).append(",");
+            sb.append(check.metadata().cvss()).append(",");
+            sb.append(escapeCsv(String.join(";", check.metadata().affectedProducts()))).append(",");
+            sb.append(escapeCsv(String.join(";", check.metadata().references()))).append(",");
+            sb.append(escapeCsv(String.join(";", check.metadata().tags()))).append("\n");
+        }
+        return sb.toString();
+    }
 }
