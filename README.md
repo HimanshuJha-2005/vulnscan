@@ -3,32 +3,31 @@
 High-performance network vulnerability scanner with plugin architecture. Built with Java 21 virtual threads and modern backend engineering practices.
 
 [![CI](https://github.com/HimanshuJha-2005/vulnscan/actions/workflows/ci.yml/badge.svg)](https://github.com/HimanshuJha-2005/vulnscan/actions/workflows/ci.yml)
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-com.himanshu%2Fvulnscan-blue)](https://central.sonatype.com/artifact/com.himanshu/vulnscan)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
 [![Native](https://img.shields.io/badge/GraalVM-Native%20Image-green.svg)](https://graalvm.org/)
 
 ## Features
 
-- **Virtual Threads** — 10,000+ concurrent connections on modest hardware using Java 21 virtual threads
+- **Virtual Threads** — High-concurrency port scanning on Java 21 virtual threads (one lightweight thread per connection, no pool tuning)
 - **Plugin Architecture** — SPI-based vulnerability checks, drop-in JAR extensions via `~/.vulnscan/checks/`
-- **Multi-format Output** — JSON, CSV, SARIF (GitHub Code Scanning), terminal table, JSON Lines
+- **Multi-format Output** — JSON, CSV, SARIF (GitHub Code Scanning), terminal table, JSON Lines; diagnostics go to stderr so `-f json > results.json` pipes cleanly
 - **Scan Profiles** — quick, full, stealth, custom with persistent YAML config (`~/.vulnscan/config.yaml`)
-- **Resume Capability** — SQLite-backed scan state (`~/.vulnscan/scans.db`) for interruption recovery
-- **Native Image** — GraalVM native binary for instant startup (~50ms)
-- **Comprehensive Detection** — 12 service probes (HTTP, SSH, FTP, MySQL, PostgreSQL, Redis, MongoDB, RDP, SMB, etc.) + 10 built-in vulnerability checks
+- **Resume Capability** — SQLite-backed scan state (`~/.vulnscan/scans.db`); `--resume <scan-id>` skips already-completed hosts
+- **GraalVM-ready** — Native-image Maven profile included (`mvn -Pnative package`)
+- **Detection Coverage** — 13 service probes (HTTP/Apache/Nginx/IIS, SSH, FTP/vsftpd, MySQL, PostgreSQL, Redis, MongoDB, RDP, SMB) + 10 built-in vulnerability checks
 
 ## Quick Start
 
 ### Prerequisites
 - Java 21+ (Temurin/OpenJDK recommended)
-- Maven 3.9+ (wrapper included)
+- Maven 3.9+
 
 ### Build
 ```bash
 git clone https://github.com/HimanshuJha-2005/vulnscan.git
 cd vulnscan
-./mvnw package
+mvn package
 ```
 
 ### Run
@@ -45,9 +44,11 @@ java -jar target/vulnscan.jar scan 10.0.0.0/8 -P quick
 # List available vulnerability checks
 java -jar target/vulnscan.jar list-checks
 
-# Resume interrupted scan
-java -jar target/vulnscan.jar scan --resume <scan-id>
+# Resume interrupted scan (skips already-completed hosts)
+java -jar target/vulnscan.jar scan 192.168.1.0/24 --resume <scan-id>
 ```
+
+Exit codes: `0` = no findings, `1` = findings present, `2` = critical findings present — CI-friendly for quality gates.
 
 ## Command Reference
 
@@ -75,10 +76,10 @@ Scan Options:
   -iL, --input-file      Read targets from file (one per line, supports CIDR/ranges)
   --checks               Comma-separated check IDs to run (default: all)
   --exclude-checks       Comma-separated check IDs to skip
-  --resume               Resume previous scan by ID
+  --resume               Resume previous scan by ID (skips already-completed hosts)
   --no-ping              Skip host discovery
-  --banner-grab          Enable banner grabbing on open ports (default: true)
-  --progress             Show progress bar (default: true)
+  --no-banner-grab       Disable banner grabbing on open ports
+  --no-progress          Disable progress bar
 
 Config Subcommands:
   config get <key>              Get configuration value
@@ -278,24 +279,27 @@ See [EXTENDING.md](EXTENDING.md) for complete guide.
 ## Testing
 
 ```bash
-# Unit tests
-./mvnw test
+# Unit tests (52 tests, all green)
+mvn test
 
-# Integration tests (requires Docker)
-./mvnw verify
+# Full verify including integration tests (requires Docker for Testcontainers)
+mvn verify
 
-# Static analysis
-./mvnw spotbugs:check checkstyle:check dependency-check:check
+# Static analysis (non-blocking; CI runs these separately)
+mvn spotbugs:check checkstyle:check
+
+# Dependency vulnerability scan (manual; requires NVD API key, see NVD_API_KEY env)
+mvn dependency-check:check
 ```
 
-## CI/CD Pipeline
+## CI
 
 The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR:
 
-1. **Build & Test** — Compile, unit tests, integration tests
-2. **Static Analysis** — SpotBugs, Checkstyle, OWASP Dependency Check
-3. **Native Image** — GraalVM native binary (main branch only)
-4. **Release** — JReleaser automation on version tags (`v*.*.*`)
+1. **Build & Test** — `mvn verify` (compile + 52 unit tests)
+2. **Static Analysis** — SpotBugs + Checkstyle (non-blocking)
+
+A GraalVM native-image profile is included (`mvn -Pnative package`, requires GraalVM 21+).
 
 ## License
 
@@ -308,16 +312,4 @@ Apache License 2.0 — see [LICENSE](LICENSE) for details.
 
 ## Author
 
-Himanshu Jha — 4th Year CSE, Cybersecurity Portfolio Project
-
----
-
-**Part of 20-project cybersecurity portfolio** — [Portfolio Tracker](https://github.com/HimanshuJha-2005/cybersec-portfolio-tracker)
-
-| # | Project | Status |
-|---|---------|--------|
-| 1 | Sigma Detection Rule (T1059.001) | ✅ Merged |
-| 2 | **VulnScan** | 🚧 Day 6/8 |
-| 3 | Home SIEM | ⏳ Planned |
-| 4 | Honeypot + Dashboard | ⏳ Planned |
-| 5 | Detection-as-Code Pipeline | ⏳ Planned |
+[Himanshu Jha](https://github.com/HimanshuJha-2005) — Backend Engineer
