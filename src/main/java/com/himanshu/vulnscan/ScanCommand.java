@@ -53,32 +53,34 @@ public class ScanCommand implements Callable<Integer> {
     @Option(names = {"--no-ping"}, description = "Skip host discovery")
     private boolean noPing = false;
 
-    @Option(names = {"--banner-grab"}, description = "Enable banner grabbing on open ports")
-    private boolean bannerGrab = true;
+    @Option(names = {"--no-banner-grab"}, description = "Disable banner grabbing on open ports")
+    private boolean noBannerGrab = false;
 
-    @Option(names = {"--progress"}, description = "Show progress bar")
-    private boolean showProgress = true;
+    @Option(names = {"--no-progress"}, description = "Disable progress bar")
+    private boolean noProgress = false;
 
     @Override
     public Integer call() {
         ScanOrchestrator.ScanConfig config = new ScanOrchestrator.ScanConfig(
-                ports, threads, timeout, bannerGrab, profile, checks, excludeChecks, noPing
+                ports, threads, timeout, !noBannerGrab, profile, checks, excludeChecks, noPing
         );
 
         ScanOrchestrator orchestrator = new ScanOrchestrator(config);
         OutputFormatter formatter = new OutputFormatter();
 
-        if (showProgress) {
+        if (!noProgress) {
             orchestrator.setProgressCallback(progress -> {
-                System.out.print(formatter.formatProgress(progress));
+                System.err.print(formatter.formatProgress(progress));
             });
         }
 
-        System.out.println("Starting scan...");
-        ScanResult result = orchestrator.execute(target, inputFile);
+        // Diagnostics go to stderr so stdout carries only the scan result
+        // (safe for pipes: vulnscan scan ... -f json > results.json).
+        System.err.println("Starting scan...");
+        ScanResult result = orchestrator.execute(target, inputFile, resume);
 
-        if (showProgress) {
-            System.out.println(); // New line after progress bar
+        if (!noProgress) {
+            System.err.println(); // New line after progress bar
         }
 
         String formatted = formatter.format(result, OutputFormatter.Format.valueOf(format.toUpperCase().replace("-", "_")));
@@ -86,7 +88,7 @@ public class ScanCommand implements Callable<Integer> {
         if (output != null) {
             try (PrintWriter writer = new PrintWriter(new FileWriter(output))) {
                 writer.print(formatted);
-                System.out.println("Results written to " + output);
+                System.err.println("Results written to " + output);
             } catch (Exception e) {
                 System.err.println("Failed to write output: " + e.getMessage());
                 return 1;

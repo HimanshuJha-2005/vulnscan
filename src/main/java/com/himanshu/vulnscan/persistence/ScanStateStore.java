@@ -49,7 +49,9 @@ public class ScanStateStore {
     }
 
     private void createTables() throws SQLException {
-        String sql = """
+        // NOTE: SQLite JDBC executes one statement per execute() call,
+        // so each DDL statement runs separately.
+        String scans = """
             CREATE TABLE IF NOT EXISTS scans (
                 scan_id TEXT PRIMARY KEY,
                 target TEXT,
@@ -64,7 +66,8 @@ public class ScanStateStore {
                 progress_message TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
+            )""";
+        String hosts = """
             CREATE TABLE IF NOT EXISTS scan_hosts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 scan_id TEXT,
@@ -74,11 +77,12 @@ public class ScanStateStore {
                 fingerprints TEXT,
                 findings TEXT,
                 FOREIGN KEY(scan_id) REFERENCES scans(scan_id)
-            );
-            CREATE INDEX IF NOT EXISTS idx_scan_hosts_scan_id ON scan_hosts(scan_id);
-            """;
+            )""";
+        String index = "CREATE INDEX IF NOT EXISTS idx_scan_hosts_scan_id ON scan_hosts(scan_id)";
         try (Statement stmt = connection.createStatement()) {
-            stmt.execute(sql);
+            stmt.execute(scans);
+            stmt.execute(hosts);
+            stmt.execute(index);
         }
     }
 
