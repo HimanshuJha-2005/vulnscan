@@ -2,6 +2,7 @@ package com.himanshu.vulnscan.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.himanshu.vulnscan.check.VulnerabilityCheck;
 
 import java.time.Instant;
 import java.util.Map;

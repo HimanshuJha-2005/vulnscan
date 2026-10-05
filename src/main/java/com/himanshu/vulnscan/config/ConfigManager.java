@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ConfigManager {
 
@@ -61,37 +65,37 @@ public class ConfigManager {
     }
 
     public void updateProfile(String name, ScannerConfig.ScanProfile profile) {
-        config.profiles().put(name, profile);
+        config.getProfiles().put(name, profile);
         save();
     }
 
     public void removeProfile(String name) {
-        config.profiles().remove(name);
+        config.getProfiles().remove(name);
         save();
     }
 
     public void setEnabledChecks(List<String> checks) {
-        config.checks().enabled().clear();
-        config.checks().enabled().addAll(checks);
+        config.getChecks().enabled().clear();
+        config.getChecks().enabled().addAll(checks);
         save();
     }
 
     public void setDisabledChecks(List<String> checks) {
-        config.checks().disabled().clear();
-        config.checks().disabled().addAll(checks);
+        config.getChecks().disabled().clear();
+        config.getChecks().disabled().addAll(checks);
         save();
     }
 
     private ScannerConfig createDefaultConfig() {
+        Map<String, ScannerConfig.ScanProfile> profiles = new HashMap<>();
+        profiles.put("quick", new ScannerConfig.ScanProfile("top100", 500, 1000, "Fast scan of top 100 ports"));
+        profiles.put("full", new ScannerConfig.ScanProfile("top1000", 1000, 3000, "Comprehensive scan of top 1000 ports"));
+        profiles.put("stealth", new ScannerConfig.ScanProfile("22,80,443,3389", 50, 10000, "Slow stealth scan of critical ports"));
+        profiles.put("all", new ScannerConfig.ScanProfile("all", 2000, 5000, "Full port range scan (1-65535)"));
         return new ScannerConfig(
                 new ScannerConfig.ScannerSettings("top1000", 1000, 3000, true),
-                Map.of(
-                        "quick", new ScannerConfig.ScanProfile("top100", 500, 1000, "Fast scan of top 100 ports"),
-                        "full", new ScannerConfig.ScanProfile("top1000", 1000, 3000, "Comprehensive scan of top 1000 ports"),
-                        "stealth", new ScannerConfig.ScanProfile("22,80,443,3389", 50, 10000, "Slow stealth scan of critical ports"),
-                        "all", new ScannerConfig.ScanProfile("all", 2000, 5000, "Full port range scan (1-65535)")
-                ),
-                new ScannerConfig.CheckSettings(List.of("*"), List.of())
+                profiles,
+                new ScannerConfig.CheckSettings(new ArrayList<>(List.of("*")), new ArrayList<>())
         );
     }
 }

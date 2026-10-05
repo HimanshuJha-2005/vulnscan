@@ -8,6 +8,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 @Command(name = "config",
@@ -190,7 +191,12 @@ class ConfigResetCommand implements Callable<Integer> {
 
         ConfigManager manager = new ConfigManager();
         // Delete config file and let it recreate
-        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(System.getProperty("user.home"), ".vulnscan", "config.yaml"));
+        try {
+            java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(System.getProperty("user.home"), ".vulnscan", "config.yaml"));
+        } catch (java.io.IOException e) {
+            System.err.println("Failed to reset configuration: " + e.getMessage());
+            return 1;
+        }
         manager.load(); // Recreates defaults
         System.out.println("Configuration reset to defaults");
         return 0;
