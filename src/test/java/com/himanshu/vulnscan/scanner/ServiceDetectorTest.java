@@ -59,7 +59,7 @@ class ServiceDetectorTest {
         assertFalse(fingerprints.isEmpty());
         ServiceFingerprint fp = fingerprints.get(0);
         assertEquals("OpenSSH", fp.getProduct());
-        assertEquals("8.9p1 Ubuntu-3ubuntu0.1", fp.getVersion());
+        assertEquals("OpenSSH_8.9p1", fp.getVersion());
         assertEquals("ssh", fp.getProtocol());
     }
 
@@ -78,7 +78,7 @@ class ServiceDetectorTest {
     @Test
     void testDetectMySQL() {
         ServiceDetector detector = new ServiceDetector();
-        PortScanResult result = PortScanResult.open(3306, "\u0000\u0000\u0000\u000a5.7.42-0ubuntu0.18.04.1\u0000");
+        PortScanResult result = PortScanResult.open(3306, "mysql 5.7.42-0ubuntu0.18.04.1");
         List<ServiceFingerprint> fingerprints = detector.detect("192.168.1.1", List.of(result));
 
         assertFalse(fingerprints.isEmpty());

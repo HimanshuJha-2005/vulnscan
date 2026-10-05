@@ -135,25 +135,25 @@ public class ServiceDetector {
                 Set.of(80, 443, 8080, 8443, 8000, 8888, 8008, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8089, 8090, 8091, 8092, 8093, 8094, 8095, 8096, 8097, 8098, 8099)
         ));
 
-        // Apache
+        // Apache (more specific than generic HTTP — must win on priority)
         registerProbe(new ServiceProbe(
-                "apache", "http", "Apache httpd", 90,
+                "apache", "http", "Apache httpd", 110,
                 Pattern.compile("(?i)Server:\\s*Apache(?:/([\\d.]+))?"),
                 1, 0.85, List.of("web", "apache"), false,
                 Set.of(80, 443, 8080, 8443)
         ));
 
-        // Nginx
+        // Nginx (more specific than generic HTTP — must win on priority)
         registerProbe(new ServiceProbe(
-                "nginx", "http", "nginx", 90,
+                "nginx", "http", "nginx", 110,
                 Pattern.compile("(?i)Server:\\s*nginx(?:/([\\d.]+))?"),
                 1, 0.85, List.of("web", "nginx"), false,
                 Set.of(80, 443, 8080, 8443)
         ));
 
-        // IIS
+        // IIS (more specific than generic HTTP — must win on priority)
         registerProbe(new ServiceProbe(
-                "iis", "http", "Microsoft IIS", 90,
+                "iis", "http", "Microsoft IIS", 110,
                 Pattern.compile("(?i)Server:\\s*Microsoft-IIS(?:/([\\d.]+))?"),
                 1, 0.85, List.of("web", "iis", "windows"), true,
                 Set.of(80, 443, 8080, 8443)
@@ -175,9 +175,9 @@ public class ServiceDetector {
                 Set.of(21, 990)
         ));
 
-        // vsftpd
+        // vsftpd (more specific than generic FTP — must win on priority)
         registerProbe(new ServiceProbe(
-                "vsftpd", "ftp", "vsftpd", 90,
+                "vsftpd", "ftp", "vsftpd", 110,
                 Pattern.compile("(?i)vsftpd(?:\\s+([\\d.]+))?"),
                 1, 0.85, List.of("file-transfer", "ftp", "vsftpd"), false,
                 Set.of(21, 990)

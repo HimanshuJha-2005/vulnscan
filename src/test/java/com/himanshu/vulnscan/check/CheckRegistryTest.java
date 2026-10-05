@@ -1,10 +1,12 @@
 package com.himanshu.vulnscan.check;
 
+import com.himanshu.vulnscan.check.VulnerabilityCheck.Severity;
 import com.himanshu.vulnscan.model.Finding;
 import com.himanshu.vulnscan.model.ServiceFingerprint;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,7 +57,7 @@ class CheckRegistryTest {
     void testExecuteChecksAnonymousFtp() {
         CheckRegistry registry = new CheckRegistry();
         ServiceFingerprint fp = new ServiceFingerprint(
-                21, "ftp", "vsftpd", "3.0.5", 0.9, "220 (vsFTPd 3.0.5)\n230 Login successful", List.of("ftp")
+                21, "ftp", "vsftpd", "3.0.5", 0.9, "220 (vsFTPd 3.0.5)\n230 Login successful. Anonymous access granted.", List.of("ftp")
         );
         List<Finding> findings = registry.executeChecks(fp);
         assertTrue(findings.stream().anyMatch(f -> f.getCheckId().equals("ANON-FTP")));

@@ -45,7 +45,8 @@ class TargetParserTest {
     void testParseHostname() throws Exception {
         List<String> targets = TargetParser.parse("localhost", null);
         assertFalse(targets.isEmpty());
-        assertTrue(targets.stream().allMatch(this::isValidIP));
+        // localhost may resolve to 127.0.0.1 and/or ::1 depending on the host.
+        assertTrue(targets.stream().allMatch(ip -> isValidIP(ip) || isValidIPv6(ip)));
     }
 
     @Test
@@ -96,5 +97,9 @@ class TargetParserTest {
             }
         }
         return true;
+    }
+
+    private boolean isValidIPv6(String ip) {
+        return ip != null && ip.contains(":");
     }
 }

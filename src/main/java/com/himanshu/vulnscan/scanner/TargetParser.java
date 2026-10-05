@@ -36,7 +36,8 @@ public class TargetParser {
             return expandCIDR(target);
         }
 
-        if (target.contains("-") && !target.contains(".")) {
+        // Last-octet range: 192.168.1.1-50
+        if (target.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+-\\d+$")) {
             return expandRange(target);
         }
 

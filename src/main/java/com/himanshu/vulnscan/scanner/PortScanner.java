@@ -134,14 +134,36 @@ public class PortScanner {
         return null;
     }
 
+    /**
+     * Well-known commonly scanned ports (nmap-style top 100).
+     * Covers web, remote access, mail, database, file sharing and management ports,
+     * including high ports such as 3306, 8080 and 8443 that a naive 1-100 range misses.
+     */
+    public static final Set<Integer> TOP_100 = new java.util.HashSet<>(java.util.List.of(
+            80, 23, 443, 21, 22, 25, 3389, 110, 445, 139, 143, 53, 135, 3306, 8080,
+            1723, 111, 995, 993, 5900, 1025, 587, 8888, 199, 1720, 465, 548, 113, 81,
+            6001, 10000, 514, 5060, 179, 1026, 2000, 8443, 8000, 32768, 554, 26, 1433,
+            49152, 2001, 515, 8008, 8666, 9090, 5357, 1080, 1521, 2049,
+            5432, 6379, 27017, 9200, 5601, 8089, 8009, 8444, 9443, 4444,
+            161, 389, 636, 990, 992, 1434, 2383, 3268, 3269, 5985, 5986,
+            8081, 8082, 8083, 8834, 8843, 9000, 9001, 9091, 9300, 11211,
+            27018, 27019, 50000, 50070, 61616, 27015, 25565, 19132, 25575, 30033,
+            560, 601, 1099, 3307, 5433, 8007, 8090
+    ));
+
     public static Set<Integer> parsePortSpec(String spec) {
         if (spec == null || spec.isBlank()) {
             return Set.of();
         }
 
         return switch (spec.toLowerCase()) {
-            case "top100" -> IntStream.rangeClosed(1, 100).boxed().collect(Collectors.toSet());
-            case "top1000" -> IntStream.rangeClosed(1, 1000).boxed().collect(Collectors.toSet());
+            case "top100" -> new java.util.HashSet<>(TOP_100);
+            case "top1000" -> {
+                // Ports 1-1000 plus commonly-abused high ports above 1000.
+                Set<Integer> ports = IntStream.rangeClosed(1, 1000).boxed().collect(Collectors.toSet());
+                ports.addAll(TOP_100);
+                yield ports;
+            }
             case "all" -> IntStream.rangeClosed(1, 65535).boxed().collect(Collectors.toSet());
             default -> parseCustomPortSpec(spec);
         };

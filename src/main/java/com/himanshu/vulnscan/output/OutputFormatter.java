@@ -1,6 +1,7 @@
 package com.himanshu.vulnscan.output;
 
 import com.himanshu.vulnscan.check.VulnerabilityCheck;
+import com.himanshu.vulnscan.orchestrator.ScanOrchestrator;
 import com.himanshu.vulnscan.model.Finding;
 import com.himanshu.vulnscan.model.PortScanResult;
 import com.himanshu.vulnscan.model.ScanResult;
