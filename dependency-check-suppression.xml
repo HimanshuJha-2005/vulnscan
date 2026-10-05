@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.1.2.xsd">
+    <!-- Suppress false positives for test dependencies -->
+    <suppress>
+        <notes>Test dependency, not included in final artifact</notes>
+        <packageUrl regex="true">pkg:maven/org.testcontainers/.*</packageUrl>
+    </suppress>
+    <suppress>
+        <notes>Test dependency, not included in final artifact</notes>
+        <packageUrl regex="true">pkg:maven/org.mockito/.*</packageUrl>
+    </suppress>
+    <suppress>
+        <notes>Test dependency, not included in final artifact</notes>
+        <packageUrl regex="true">pkg:maven/org.junit/.*</packageUrl>
+    </suppress>
+</suppressions>
