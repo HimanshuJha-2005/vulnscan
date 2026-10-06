@@ -8,6 +8,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 @Command(name = "list-checks",
@@ -33,7 +34,7 @@ public class ListChecksCommand implements Callable<Integer> {
 
         if (category != null && !category.isBlank()) {
             checks = checks.stream()
-                    .filter(c -> c.metadata().tags().contains(category.toLowerCase()))
+                    .filter(c -> c.metadata().tags().contains(category.toLowerCase(Locale.ROOT)))
                     .toList();
         }
 

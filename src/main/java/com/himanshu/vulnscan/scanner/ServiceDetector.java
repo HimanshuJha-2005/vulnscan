@@ -32,11 +32,10 @@ public class ServiceDetector {
                 continue;
             }
 
+            // matchProbe never returns null (falls back to a generic fingerprint).
             ServiceFingerprint fingerprint = matchProbe(target, result);
-            if (fingerprint != null) {
-                fingerprints.add(fingerprint);
-                log.debug("Identified {} on {}:{}", fingerprint.getProduct(), target, result.getPort());
-            }
+            fingerprints.add(fingerprint);
+            log.debug("Identified {} on {}:{}", fingerprint.getProduct(), target, result.getPort());
         }
 
         return fingerprints;

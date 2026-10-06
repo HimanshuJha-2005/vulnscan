@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ConfigManager {
+public final class ConfigManager {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
 

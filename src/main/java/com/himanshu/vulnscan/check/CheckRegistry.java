@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,7 +17,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CheckRegistry {
+public final class CheckRegistry {
 
     private static final Logger log = LoggerFactory.getLogger(CheckRegistry.class);
 
@@ -67,7 +68,8 @@ public class CheckRegistry {
             var services = loader.getResources("META-INF/services/com.himanshu.vulnscan.check.VulnerabilityCheck");
             while (services.hasMoreElements()) {
                 URL url = services.nextElement();
-                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(url.openStream()))) {
+                try (var reader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
@@ -79,14 +81,14 @@ public class CheckRegistry {
                                     register(check);
                                     log.info("Loaded external check: {} from {}", check.metadata().id(), jarPath.getFileName());
                                 }
-                            } catch (Exception e) {
+                            } catch (ReflectiveOperationException | RuntimeException e) {
                                 log.warn("Failed to load check class {}: {}", line, e.getMessage());
                             }
                         }
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.warn("Failed to load checks from {}: {}", jarPath, e.getMessage());
         }
     }
@@ -227,7 +229,7 @@ public class CheckRegistry {
         @Override
         public Optional<Finding> execute(ServiceFingerprint fp) {
             if (!"ftp".equals(fp.getProtocol())) return Optional.empty();
-            String banner = fp.getRawBanner().toLowerCase();
+            String banner = fp.getRawBanner().toLowerCase(Locale.ROOT);
             if (banner.contains("230") && (banner.contains("anonymous") || banner.contains("guest"))) {
                 return Optional.of(Finding.fromCheck(metadata(), banner, "Anonymous FTP login successful"));
             }
@@ -275,7 +277,7 @@ public class CheckRegistry {
         @Override
         public Optional<Finding> execute(ServiceFingerprint fp) {
             if (!"redis".equals(fp.getProtocol())) return Optional.empty();
-            String banner = fp.getRawBanner().toLowerCase();
+            String banner = fp.getRawBanner().toLowerCase(Locale.ROOT);
             if (banner.contains("redis_version") && !banner.contains("requirepass")) {
                 return Optional.of(Finding.fromCheck(metadata(), banner, "Redis allows unauthenticated access"));
             }

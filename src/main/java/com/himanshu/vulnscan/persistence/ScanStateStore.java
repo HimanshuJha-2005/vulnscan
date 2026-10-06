@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ScanStateStore {
+public final class ScanStateStore {
 
     private static final Logger log = LoggerFactory.getLogger(ScanStateStore.class);
 
@@ -43,7 +43,9 @@ public class ScanStateStore {
             connection = DriverManager.getConnection(DB_URL);
             createTables();
             log.info("Initialized scan state store at {}", DB_FILE);
-        } catch (Exception e) {
+        } catch (SQLException | IOException | RuntimeException e) {
+            // Never let the constructor throw: without persistence the scanner
+            // still runs, it just cannot resume interrupted scans.
             log.error("Failed to initialize scan state store: {}", e.getMessage());
         }
     }
@@ -205,7 +207,8 @@ public class ScanStateStore {
         if (json == null || json.isBlank()) return List.of();
         try {
             return MAPPER.readValue(json, MAPPER.getTypeFactory().constructCollectionType(List.class, clazz));
-        } catch (Exception e) {
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            log.debug("Failed to deserialize stored JSON: {}", e.getMessage());
             return List.of();
         }
     }

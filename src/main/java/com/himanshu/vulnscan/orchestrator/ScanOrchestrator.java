@@ -166,11 +166,11 @@ public class ScanOrchestrator {
         try (var socket = new java.net.Socket()) {
             socket.connect(new java.net.InetSocketAddress(host, 80), 1000);
             return true;
-        } catch (Exception e) {
+        } catch (java.io.IOException e) {
             try (var socket = new java.net.Socket()) {
                 socket.connect(new java.net.InetSocketAddress(host, 443), 1000);
                 return true;
-            } catch (Exception ignored) {
+            } catch (java.io.IOException ignored) {
                 return false;
             }
         }

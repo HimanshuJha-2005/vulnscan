@@ -9,15 +9,19 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -56,7 +60,11 @@ public class PortScanner {
                         results.add(result);
                         log.debug("Port {} open on {}", result.getPort(), target);
                     }
-                } catch (Exception e) {
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.debug("Port scan interrupted: {}", e.getMessage());
+                    break;
+                } catch (ExecutionException | TimeoutException e) {
                     log.debug("Port scan error: {}", e.getMessage());
                 }
                 int done = completed.incrementAndGet();
@@ -69,7 +77,7 @@ public class PortScanner {
             log.info("Port scan completed in {}ms. Open ports: {}", elapsed.toMillis(), results.size());
             return results;
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Port scanner executor error: {}", e.getMessage());
             throw new RuntimeException("Port scan failed", e);
         }
@@ -104,7 +112,7 @@ public class PortScanner {
             byte[] buffer = new byte[1024];
             int bytesRead = socket.getInputStream().read(buffer);
             if (bytesRead > 0) {
-                return new String(buffer, 0, bytesRead).trim();
+                return new String(buffer, 0, bytesRead, StandardCharsets.UTF_8).trim();
             }
 
             String[] probes = {
@@ -117,18 +125,22 @@ public class PortScanner {
 
             for (String probe : probes) {
                 try {
-                    socket.getOutputStream().write(probe.getBytes());
+                    socket.getOutputStream().write(probe.getBytes(StandardCharsets.US_ASCII));
                     socket.getOutputStream().flush();
                     Thread.sleep(100);
                     bytesRead = socket.getInputStream().read(buffer);
                     if (bytesRead > 0) {
-                        return new String(buffer, 0, bytesRead).trim();
+                        return new String(buffer, 0, bytesRead, StandardCharsets.UTF_8).trim();
                     }
-                } catch (Exception ignored) {
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (IOException ignored) {
+                    // Try the next probe.
                 }
             }
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.debug("Banner grab failed: {}", e.getMessage());
         }
         return null;
@@ -139,7 +151,7 @@ public class PortScanner {
      * Covers web, remote access, mail, database, file sharing and management ports,
      * including high ports such as 3306, 8080 and 8443 that a naive 1-100 range misses.
      */
-    public static final Set<Integer> TOP_100 = new java.util.HashSet<>(java.util.List.of(
+    private static final Set<Integer> TOP_100 = new java.util.HashSet<>(java.util.List.of(
             80, 23, 443, 21, 22, 25, 3389, 110, 445, 139, 143, 53, 135, 3306, 8080,
             1723, 111, 995, 993, 5900, 1025, 587, 8888, 199, 1720, 465, 548, 113, 81,
             6001, 10000, 514, 5060, 179, 1026, 2000, 8443, 8000, 32768, 554, 26, 1433,
@@ -156,7 +168,7 @@ public class PortScanner {
             return Set.of();
         }
 
-        return switch (spec.toLowerCase()) {
+        return switch (spec.toLowerCase(Locale.ROOT)) {
             case "top100" -> new java.util.HashSet<>(TOP_100);
             case "top1000" -> {
                 // Ports 1-1000 plus commonly-abused high ports above 1000.

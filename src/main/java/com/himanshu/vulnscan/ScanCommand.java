@@ -8,8 +8,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 @Command(name = "scan",
@@ -83,13 +87,13 @@ public class ScanCommand implements Callable<Integer> {
             System.err.println(); // New line after progress bar
         }
 
-        String formatted = formatter.format(result, OutputFormatter.Format.valueOf(format.toUpperCase().replace("-", "_")));
+        String formatted = formatter.format(result, OutputFormatter.Format.valueOf(format.toUpperCase(Locale.ROOT).replace("-", "_")));
 
         if (output != null) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(output))) {
+            try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Paths.get(output), StandardCharsets.UTF_8))) {
                 writer.print(formatted);
                 System.err.println("Results written to " + output);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 System.err.println("Failed to write output: " + e.getMessage());
                 return 1;
             }

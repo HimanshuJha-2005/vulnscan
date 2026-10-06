@@ -184,7 +184,8 @@ class ConfigResetCommand implements Callable<Integer> {
                     System.out.println("Cancelled");
                     return 0;
                 }
-            } catch (Exception e) {
+            } catch (java.io.IOException e) {
+                System.err.println("Failed to read input: " + e.getMessage());
                 return 1;
             }
         }
